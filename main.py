@@ -1,68 +1,55 @@
-# Matador Version 0.1
+# Matador Version 0.3
 # By Andrew Colabella and Julian Costas
+from tkinter import *
+from tkinter import ttk
 import urllib.request as ur
-print("Matador (version 0.0.1)")
-upper_range = 20  # for SMA
-upper_param = 25  # for Aroon
-lower_param = 14  # for Aroon
-in_portfolio = None
-# SMA Variables
-sma_buys = 0
-sma_sells = 0
-sma_last_buy = None
-sma_profit = 0
-sma_max_profit = 0
-sma_best_long = None
-sma_best_short = None
-# macD Variables
-macd_last_buy = None
-macd_profit = 0
-macdbuys = 0
-macdsells = 0
-# PPO Variables
-ppobuys = 0
-pposells = 0
-ppo_last_buy = None
-ppo_profit = 0
-# Aroon Variables
-aroonbuys = 0
-aroonsells = 0
-aroon_last_buy = None
-aroon_best_param = None
-aroon_profit = 0
-aroon_max_profit = 0
-# RSI Variables
-rsi_last_buy = None
-rsibuys = 0
-rsiprofit = 0
-rsisells = 0
 
-link_part1 = 'https://www.google.com/finance/getprices?i=3600&p='
-link_part2 = "d&f=c&df=cpct&q="
+#Main window
+root = Tk()
+root.title('Matador (0.3)')
+root.geometry('500x400')
+#Frame
+topFrame = Frame(root)
+topFrame.pack()
+bottomFrame = Frame(root)
+bottomFrame.pack(side=BOTTOM)
+#Ticker/Analyze
+ticker_label = Label(topFrame, text="Ticker: ")
+ticker_label.grid(row=0, column=0, sticky=E)
+ticker_entry = Entry(topFrame)
+ticker_entry.grid(row=0, column=1)
+days_label = Label(topFrame, text="Days: ")
+days_label.grid(row=1, column=0, sticky=E)
+days_scale = Spinbox(topFrame, from_=1, to = 20)
+days_scale.grid(row=1,column=1)
 
-# Ask user for ticker name
-ticker = input("Enter the ticker name: ")
-# Ask user for days analyzed
-days = input("Enter the number of days you wish to analyze: ")
-# 7 trading hours per day
-period = int(days) * 7
+#Notebook of Indicators
+nb = ttk.Notebook(bottomFrame, height = 280, width = 450, padding = 10)
+stockdata_page = ttk.Frame(nb)
+aroon_page = ttk.Frame(nb)
+macd_page = ttk.Frame(nb)
+ppo_page = ttk.Frame(nb)
+sma_page = ttk.Frame(nb)
+nb.add(stockdata_page, text='Stock Data')
+nb.add(aroon_page, text='Aroon')
+nb.add(macd_page, text='macD')
+nb.add(ppo_page, text='PPO')
+nb.add(sma_page, text='SMA')
+nb.pack()
+#Textboxes
+stockdata_text = Text(stockdata_page, width=400, height=300)
+stockdata_text.pack()
+aroon_text = Text(aroon_page, width=400,height=300)
+aroon_text.pack()
+macd_text = Text(macd_page, width=400,height=300)
+macd_text.pack()
+ppo_text = Text(ppo_page, width=400,height=300)
+ppo_text.pack()
+sma_text = Text(sma_page, width=400,height=300)
+sma_text.pack()
 
-# Import 50 Days
-imported_length = 346
-
-# Create full Google finance hyperlink based on users data
-full_link = link_part1 + "50" + link_part2 + ticker
-# Open Webpage
-htmlfile = ur.urlopen(full_link)
-htmltext = htmlfile.read()
-# Parse Stock Data into a list
-data = str(htmltext[120:])
-data = data[1:]
-data = data.replace('\\n', ' ')
-data = data.replace('\'', '')
-data = data.split()
-data = list(map(float, data))
-print(data)
+imported_length = 50
+main_link = 'https://www.google.com/finance/getprices?i=3600&p=50d&f=c&df=cpct&q='
 
 # Simple moving average
 def sma(prices, tick, time_frame):
@@ -179,151 +166,189 @@ def current_loss(prices, tick):
 
    return [cur_loss]
 
-#MAIN PROCESS
+def get_data():
+    upper_range = 20  # for SMA
+    upper_param = 25  # for Aroon
+    lower_param = 14  # for Aroon
+    in_portfolio = None
+    # SMA Variables
+    sma_buys = 0
+    sma_sells = 0
+    sma_last_buy = None
+    sma_profit = 0
+    sma_max_profit = 0
+    sma_best_long = None
+    sma_best_short = None
+    # macD Variables
+    macd_last_buy = None
+    macd_profit = 0
+    macdbuys = 0
+    macdsells = 0
+    # PPO Variables
+    ppobuys = 0
+    pposells = 0
+    ppo_last_buy = None
+    ppo_profit = 0
+    # Aroon Variables
+    aroonbuys = 0
+    aroonsells = 0
+    aroon_last_buy = None
+    aroon_best_param = None
+    aroon_profit = 0
+    aroon_max_profit = 0
+    full_link = main_link + ticker_entry.get()
+    period = int(days_scale.get())*7
+    # Open Webpage
+    htmlfile = ur.urlopen(full_link)
+    htmltext = htmlfile.read()
+    # Parse Stock Data into a list
+    if "NASDAQ" in str(htmltext):
+        data = str(htmltext[120:])
+    elif "CURRENCY" in str(htmltext):
+        data = str(htmltext[117:])
+    elif "NYSE" in str(htmltext):
+        data = str(htmltext[118:])
 
-#SMA
-in_portfolio = False
-for i in range(1, upper_range):
-    for j in range((i + 1), 21):
-        for k in range(1, period):
-            tick_n = imported_length - period + k
-            short_sma = sma(data, tick_n, i)
-            long_sma = sma(data, tick_n, j)
-            if (short_sma > long_sma) and (in_portfolio == False):
-                sma_buys = sma_buys + data[tick_n]
-                sma_last_buy = tick_n
-                in_portfolio = True
+    data = data[1:]
+    data = data.replace('\\n', ' ')
+    data = data.replace('\'', '')
+    data = data.split()
+    data = list(map(float, data))
+    stockdata_text.delete("1.0",END)
+    aroon_text.delete("1.0",END)
+    macd_text.delete("1.0",END)
+    ppo_text.delete("1.0",END)
+    sma_text.delete("1.0",END)
 
-            if (long_sma > short_sma) and (in_portfolio == True):
-                sma_sells = sma_sells + data[tick_n]
-                in_portfolio = False
+    for i in range(0,346):
+        stockdata_text.insert(END, str(data[i]) + "\n")
 
-        if (in_portfolio == True):
-            sma_profit = sma_sells - sma_buys + data[sma_last_buy]
+    # SMA
+    in_portfolio = False
+    for i in range(1, upper_range):
+        for j in range((i + 1), 21):
+            sma_text.insert(END, "\n\nShort: " + str(i) + " Long: " + str(j))
+            for k in range(1, period):
+                tick_n = imported_length - period + k
+                short_sma = sma(data, tick_n, i)
+                long_sma = sma(data, tick_n, j)
+                if (short_sma > long_sma) and (in_portfolio == False):
+                    sma_buys = sma_buys + data[tick_n]
+                    sma_last_buy = tick_n
+                    sma_text.insert(END, "\nBuys at: " + str(data[tick_n]))
+                    in_portfolio = True
 
-        if (in_portfolio == False):
-            sma_profit = sma_sells - sma_buys
+                if (long_sma > short_sma) and (in_portfolio == True):
+                    sma_sells = sma_sells + data[tick_n]
+                    sma_text.insert(END, "\nSells at: " + str(data[tick_n]))
+                    in_portfolio = False
 
-        in_portfolio = False
-        sma_sells = 0
-        sma_buys = 0
+            if (in_portfolio == True):
+                sma_profit = sma_sells - sma_buys + data[sma_last_buy]
+                sma_text.insert(END, "\nProfit: " + str(sma_profit))
 
-        if (sma_profit > sma_max_profit):
-            sma_max_profit = sma_profit
-            sma_best_short = i
-            sma_best_long = j
-print("SMA Max Profit: " + str(sma_max_profit) + "   Best Short: " + str(sma_best_short) + "   Best Long: " + str(sma_best_long))
+            if (in_portfolio == False):
+                sma_profit = sma_sells - sma_buys
+                sma_text.insert(END, "\nProfit: " + str(sma_profit))
 
-#macD
-in_portfolio = False
-for k in range(1, period):
-    tick_n = imported_length - period + k
-    macD = macD_line(data, tick_n)
+            in_portfolio = False
+            sma_sells = 0
+            sma_buys = 0
 
-    if (macD[0] > 0) and (in_portfolio == False):
-        macdbuys = macdbuys + data[tick_n]
-        macd_last_buy = tick_n
-        in_portfolio = True
+            if (sma_profit > sma_max_profit):
+                sma_max_profit = sma_profit
+                sma_best_short = i
+                sma_best_long = j
 
-    if (macD[0] < 0) and (in_portfolio == True):
-        macdsells = macdsells + data[tick_n]
-        in_portfolio = False
+    sma_text.insert(END, "\n\nSMA Max Profit: " + str(sma_max_profit) + "   Best Short: " + str(sma_best_short) + "   Best Long: " + str(sma_best_long))
 
-if in_portfolio == True:
-    macd_profit = macdsells - macdbuys + data[macd_last_buy]
+    # macD
+    in_portfolio = False
+    for k in range(1, period):
+        tick_n = imported_length - period + k
+        macD = macD_line(data, tick_n)
+        if (macD[0] > 0) and (in_portfolio == False):
+            macdbuys = macdbuys + data[tick_n]
+            macd_last_buy = tick_n
+            macd_text.insert(END, "\nBuys at: " + str(data[tick_n]))
+            in_portfolio = True
+        elif (macD[0] < 0) and (in_portfolio == True):
+            macdsells = macdsells + data[tick_n]
+            macd_text.insert(END, "\nSells at: " + str(data[tick_n]))
+            in_portfolio = False
 
-if in_portfolio == False:
-    macd_profit = macdsells - macdbuys
+    if in_portfolio == True:
+        macd_profit = macdsells - macdbuys + data[macd_last_buy]
+        macd_text.insert(END, "\nProfit: " + str(macd_profit))
+    if in_portfolio == False:
+        macd_profit = macdsells - macdbuys
+        macd_text.insert(END, "\nProfit: " + str(macd_profit))
 
-print("macD Profit: " + str(macd_profit))
+    # PPO
+    in_portfolio = False
+    for m in range(1, period):
+        tick_n = imported_length - period + m
+        ppo = ppo_value(data, tick_n)
 
-#PPO
-in_portfolio = False
-for m in range(1, period):
-    tick_n = imported_length - period + m
-    ppo = ppo_value(data, tick_n)
-
-    if (ppo[0] > 0) and (in_portfolio == False):
-        ppobuys = ppobuys + data[tick_n]
-        ppo_last_buy = tick_n
-        in_portfolio = True
-
-    if (ppo[0] < 0) and (in_portfolio == True):
-        pposells = pposells + data[tick_n]
-        in_portfolio = False
-
-if in_portfolio == True:
-    ppo_profit = pposells - ppobuys + data[ppo_last_buy]
-
-if in_portfolio == False:
-    ppo_profit = pposells - ppobuys
-
-print("PPO Profit: " + str(ppo_profit))
-
-#Aroon
-in_portfolio = False
-for g in range(lower_param, (upper_param + 1)):
-    for h in range(1, period):
-        tick_n = imported_length - period + h
-        tick_high = highest(data, tick_n, g)
-        tick_low = lowest(data, tick_n, g)
-        aroonup = aroon_up(tick_n, g, tick_high)
-        aroondown = aroon_down(tick_n, g, tick_low)
-        if (aroonup > aroondown) and (aroonup[0] > 50) and (in_portfolio == False):
-            aroonbuys = aroonbuys + data[tick_n]
-            aroon_last_buy = tick_n
+        if (ppo[0] > 0) and (in_portfolio == False):
+            ppobuys = ppobuys + data[tick_n]
+            ppo_last_buy = tick_n
+            ppo_text.insert(END, "\nBuys at: " + str(data[tick_n]))
             in_portfolio = True
 
-        if (aroondown > aroonup) and (aroondown[0] > 50) and (in_portfolio == True):
-            aroonsells = aroonsells + data[tick_n]
+        if (ppo[0] < 0) and (in_portfolio == True):
+            pposells = pposells + data[tick_n]
+            ppo_text.insert(END, "\nSells at: " + str(data[tick_n]))
             in_portfolio = False
-    if in_portfolio:
-        aroon_profit = aroonsells - aroonbuys + data[aroon_last_buy]
+
+    if in_portfolio == True:
+        ppo_profit = pposells - ppobuys + data[ppo_last_buy]
+        ppo_text.insert(END, "\nProfit: " + str(ppo_profit))
 
     if in_portfolio == False:
-        aroon_profit = aroonsells - aroonbuys
+        ppo_profit = pposells - ppobuys
+        ppo_text.insert(END, "\nProfit: " + str(ppo_profit))
 
+    # Aroon
     in_portfolio = False
-    aroonsells = 0
-    aroonbuys = 0
+    for g in range(lower_param, (upper_param + 1)):
+        aroon_text.insert(END, "\nParameter: " + str(g))
+        for h in range(1, period):
+            tick_n = imported_length - period + h
+            tick_high = highest(data, tick_n, g)
+            tick_low = lowest(data, tick_n, g)
+            aroonup = aroon_up(tick_n, g, tick_high)
+            aroondown = aroon_down(tick_n, g, tick_low)
+            if (aroonup[0] > 50) and (aroondown[0] < 50) and (in_portfolio == False):
+                aroonbuys = aroonbuys + data[tick_n]
+                aroon_last_buy = tick_n
+                aroon_text.insert(END, "\nBuys at: " + str(data[tick_n]))
+                in_portfolio = True
+            elif (aroondown[0] > 50) and (aroonup[0] < 50) and (in_portfolio == True):
+                aroonsells = aroonsells + data[tick_n]
+                aroon_text.insert(END, "\nSells at: " + str(data[tick_n]))
+                in_portfolio = False
+        if in_portfolio:
+            aroon_profit = aroonsells - aroonbuys + data[aroon_last_buy]
+            aroon_text.insert(END, "\nProfit: " + str(aroon_profit))
 
-    if (aroon_profit > aroon_max_profit):
-        aroon_max_profit = aroon_profit
-        aroon_best_param = g
+        if in_portfolio == False:
+            aroon_profit = aroonsells - aroonbuys
+            aroon_text.insert(END, "\nProfit: " + str(aroon_profit))
 
-print("Aroon Profit: " + str(aroon_max_profit) + "   Best Parameter: " + str(aroon_best_param))
-
-#RSI
-in_portfolio = False
-for a in range(1, period):
-    tick_n = imported_length - period + a
-    if tick_n == (imported_length - period + 1):
-        av_gains = average_gains(data, tick_n)[0]
-        av_losses = average_losses(data, tick_n)[0]
-    else:
-        av_gains = ((13 * prev_gain) + current_gain(data, tick_n)[0]) / 14
-        av_losses = ((13 * prev_loss) + current_loss(data, tick_n)[0]) / 14
-
-    prev_gain = av_gains
-    prev_loss = av_losses
-    rel_strength = av_gains/av_losses
-
-    RSI = 100 - (100 / (1 + rel_strength))
-    if (RSI <= 31) and (in_portfolio == False):
-        rsibuys = rsibuys + data[tick_n]
-        rsi_last_buy = tick_n
-        in_portfolio = True
-
-    if (RSI >= 69) and (in_portfolio == True):
-        rsisells = rsisells + data[tick_n]
         in_portfolio = False
+        aroonsells = 0
+        aroonbuys = 0
 
-if in_portfolio == True:
-    rsiprofit = rsisells - rsibuys + data[rsi_last_buy]
+        if (aroon_profit > aroon_max_profit):
+            aroon_max_profit = aroon_profit
+            aroon_best_param = g
+    aroon_text.insert(END, "\n\nMax Profit: " + str(aroon_max_profit) + " Best Parameter: " + str(aroon_best_param))
 
-if in_portfolio == False:
-    rsiprofit = rsisells - rsibuys
 
-print("RSI Profit: " + str(rsiprofit))
+#Click button to run
+analyze_button = Button(topFrame, text="Analyze", command=get_data)
+analyze_button.grid(row=2,column=1)
 
-input("\nPress any key to exit")
+#Keep on screen
+root.mainloop()
