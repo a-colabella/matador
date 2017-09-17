@@ -1,5 +1,6 @@
 # Matador Version 0.5
-# By Andrew Colabella and Julian Costas
+# By Andrew Colabella
+# Imports
 from tkinter import *
 from tkinter import ttk
 import urllib.request as ur
@@ -9,17 +10,21 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 matplotlib.use("TkAgg")
+
+# Change font
 font = {'family' : 'arial',
         'weight' : 'normal',
         'size'   : 9}
 
 matplotlib.rc('font', **font)
+
 #Main window
 root = Tk()
-root.title('Matador (0.5)') #Version
+root.title('Matador (0.5)') #Version Number
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()
 root.geometry("%dx%d+0+0" % (w, h)) #Fullscreen
 root.state('zoomed')
+
 #Frame
 topFrame = Frame(root)
 topFrame.pack(side=TOP, fill=X)
@@ -27,6 +32,7 @@ middleFrame = Frame(root)
 middleFrame.pack()
 bottomFrame = Frame(root)
 bottomFrame.pack(side=BOTTOM)
+
 #Ticker/Analyze
 ticker_label = Label(topFrame, text="Ticker: ")
 ticker_label.pack(side="left")
@@ -36,6 +42,7 @@ days_label = Label(topFrame, text="Days: ")
 days_label.pack(side="left")
 days_scale = Spinbox(topFrame, from_=1, to = 20)
 days_scale.pack(side="left")
+
 #Checkboxes
 view_aroon = Checkbutton(topFrame, text="Aroon")
 view_macd = Checkbutton(topFrame, text="MACD")
@@ -45,6 +52,7 @@ view_sma.pack(side="right")
 view_ppo.pack(side="right")
 view_macd.pack(side="right")
 view_aroon.pack(side="right")
+
 #GRAPH FIGURE
 plt.ion()
 f = Figure(figsize=(8,3.5), dpi=100,tight_layout=TRUE)
@@ -61,6 +69,7 @@ a_volume.set_ylabel('Volume')
 canvas_volume = FigureCanvasTkAgg(f_volume,master=middleFrame)
 canvas_volume.show()
 canvas_volume.get_tk_widget().pack()
+
 #Notebook of Indicators
 nb = ttk.Notebook(bottomFrame, height = 100, width = (w-20), padding = 10)
 stockdata_page = ttk.Frame(nb)
@@ -76,6 +85,7 @@ nb.add(macd_page, text='MACD')
 nb.add(ppo_page, text='PPO')
 nb.add(sma_page, text='SMA')
 nb.grid(row=8)
+
 #Textboxes
 stockdata_text = Text(stockdata_page, width=600, height=200)
 stockdata_text.pack()
